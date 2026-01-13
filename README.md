@@ -2,6 +2,8 @@
 
 A complete restaurant ordering system with multi-tenancy, category-based menu management, and real-time order processing.
 
+[**View Future Roadmap & Checklist**](./ROADMAP.md)
+
 ## 🚀 Recent Upgrades
 - 🛒 **Cart Management**: Increase/decrease quantity or remove items directly from the cart.
 - 📊 **Enhanced Dashboard**: Modern sales reports with date-specific tracking.
