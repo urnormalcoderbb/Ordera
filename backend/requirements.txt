@@ -1,0 +1,7 @@
+starlette
+uvicorn
+sqlalchemy
+websockets
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart

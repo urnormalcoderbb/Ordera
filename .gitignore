@@ -1,0 +1,35 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+auth_tokens.json
+
+# Databases
+*.db
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.pwp
+*.pwo
+*.pwc
+
+# Local/Secrets
+.env
+.vscode/
+.idea/
+
+# Application Specific
+uploads/
+*.json
+!pubspec.json
+!signup.json
+!login.json
+# Note: I'm keeping some JSONs if they are part of the logic, but usually we ignore test data.
+
+# Logs
+*.log
