@@ -38,7 +38,7 @@ async def signup(request: Request):
 
     restaurant_name = restaurant_name.strip()
     city = city.strip()
-    username = username.strip().lower()
+    username = username.strip()
 
     if " - " not in restaurant_name:
         return JSONResponse({"error": "Restaurant name must be in format: Name - Area"}, status_code=400)
@@ -85,16 +85,16 @@ async def login(request: Request):
         if not username or not restaurant_name or not city:
              return JSONResponse({"error": "Missing username, restaurant name, or city"}, status_code=400)
 
-        username = username.strip().lower()
+        username = username.strip()
         restaurant_name = restaurant_name.strip()
         city = city.strip()
         
         print(f"Login attempt for: {username} at {restaurant_name} ({city})")
         
         with database.get_db_context() as db:
-            # 1. Find Restaurant (Case Insensitive Name + City)
+            # 1. Find Restaurant (Case Sensitive Name, Case Insensitive City)
             restaurant = db.query(models.Restaurant).filter(
-                func.lower(models.Restaurant.name) == restaurant_name.lower(),
+                models.Restaurant.name == restaurant_name,
                 func.lower(models.Restaurant.city) == city.lower()
             ).first()
             

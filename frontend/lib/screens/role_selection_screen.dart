@@ -98,10 +98,10 @@ class RoleSelectionScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-              final username = userController.text.trim().toLowerCase();
+              final username = userController.text.trim();
               final password = passController.text;
 
-              if (username != auth.user?.username?.toLowerCase()) {
+              if (username != auth.user?.username) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid admin username')));
                 return;
               }
