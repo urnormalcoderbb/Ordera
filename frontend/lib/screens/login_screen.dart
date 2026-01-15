@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../config/design_system.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,14 +10,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _restaurantNameController = TextEditingController(); 
-  final _cityController = TextEditingController(); // New City Controller
+  final _cityController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> _login() async {
     if (_restaurantNameController.text.isEmpty || _cityController.text.isEmpty || _usernameController.text.isEmpty || _passwordController.text.isEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('All fields are required')));
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All fields are required')));
        return;
     }
 
@@ -31,88 +31,158 @@ class _LoginScreenState extends State<LoginScreen> {
       _passwordController.text,
     );
 
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
 
     if (error == null) {
-       // Navigate to Role Selection
        Navigator.of(context).pushReplacementNamed('/role_selection');
     } else {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: OrderaDesign.danger));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Container(
-          width: 400,
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Welcome Back", style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-              SizedBox(height: 10),
-              Text("Login to manage your restaurant", style: TextStyle(color: Colors.grey)),
-              SizedBox(height: 30),
-              TextField(
-                controller: _restaurantNameController,
-                decoration: InputDecoration(
-                  labelText: 'Restaurant Name', 
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: Icon(Icons.store),
-                ),
+      backgroundColor: OrderaDesign.background,
+      body: Stack(
+        children: [
+          // Background Aesthetic
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: OrderaDesign.primary.withOpacity(0.1),
               ),
-              SizedBox(height: 15),
-              TextField(
-                controller: _cityController,
-                decoration: InputDecoration(
-                  labelText: 'City / Branch Location', 
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: Icon(Icons.location_city),
-                ),
-              ),
-              SizedBox(height: 15),
-              TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username', 
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-              SizedBox(height: 15),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password', 
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 25),
-              _isLoading 
-                ? CircularProgressIndicator()
-                : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: _login,
-                      child: Text("Login", style: TextStyle(fontSize: 16, color: Colors.white)),
-                    ),
-                  ),
-              SizedBox(height: 15),
-              TextButton(
-                onPressed: () => Navigator.of(context).pushReplacementNamed('/signup'),
-                child: Text("New here? Create a Restaurant Account", style: TextStyle(color: Colors.deepPurple)),
-              )
-            ],
+            ),
           ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: OrderaDesign.secondary.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              child: Container(
+                width: 450,
+                padding: const EdgeInsets.all(40),
+                decoration: OrderaDesign.cardDecoration,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: OrderaDesign.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.restaurant_menu, color: OrderaDesign.primary, size: 40),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Center(child: Text("Welcome Back", style: OrderaDesign.heading1)),
+                    const SizedBox(height: 8),
+                    Center(child: Text("Login to your restaurant dashboard", style: OrderaDesign.bodyMedium)),
+                    const SizedBox(height: 40),
+                    _buildLabel("Restaurant Name"),
+                    _buildTextField(_restaurantNameController, Icons.store, "Enter restaurant name"),
+                    const SizedBox(height: 20),
+                    _buildLabel("City / Location"),
+                    _buildTextField(_cityController, Icons.location_city, "Enter city or branch"),
+                    const SizedBox(height: 20),
+                    _buildLabel("Username"),
+                    _buildTextField(_usernameController, Icons.person_outline, "Enter your username"),
+                    const SizedBox(height: 20),
+                    _buildLabel("Password"),
+                    _buildTextField(_passwordController, Icons.lock_outline, "Enter your password", obscure: true),
+                    const SizedBox(height: 40),
+                    _isLoading 
+                      ? const Center(child: CircularProgressIndicator())
+                      : SizedBox(
+                          width: double.infinity,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: OrderaDesign.primaryGradient,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                              ),
+                              onPressed: _login,
+                              child: const Text("Sign In", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                            ),
+                          ),
+                        ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pushReplacementNamed('/signup'),
+                        child: RichText(
+                          text: TextSpan(
+                            text: "Don't have an account? ",
+                            style: OrderaDesign.bodyMedium,
+                            children: const [
+                              TextSpan(
+                                text: "Sign Up",
+                                style: TextStyle(color: OrderaDesign.primary, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      child: Text(text, style: OrderaDesign.label),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, IconData icon, String hint, {bool obscure = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: OrderaDesign.bodyMedium.copyWith(color: OrderaDesign.textSecondary.withOpacity(0.5)),
+        prefixIcon: Icon(icon, color: OrderaDesign.textSecondary, size: 20),
+        filled: true,
+        fillColor: OrderaDesign.background,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: OrderaDesign.primary, width: 1.5),
         ),
       ),
     );

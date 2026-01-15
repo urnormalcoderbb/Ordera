@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 
+import '../config/config.dart';
+
 class ApiService {
-  // Use 10.0.2.2 for Android emulator, localhost for Web/Windows
-  final String baseUrl = "http://localhost:8000";
+  final String baseUrl = AppConfig.apiBaseUrl;
 
   Future<User?> login(String restaurantName, String city, String username, String password) async {
     print("ApiService: Login started for $username at $restaurantName ($city)");
@@ -248,7 +249,12 @@ class ApiService {
     if (response.statusCode == 200) {
       return Order.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to place order');
+      String errorMessage = 'Failed to place order';
+      try {
+        final errorBody = jsonDecode(response.body);
+        errorMessage = errorBody['error'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
     }
   }
 

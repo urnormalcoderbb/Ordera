@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/order_provider.dart';
 import '../../models/models.dart';
 import 'package:intl/intl.dart';
+import '../../config/design_system.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   @override
@@ -19,103 +20,161 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: OrderaDesign.background,
       appBar: AppBar(
-        title: Text('Order History', style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: OrderaDesign.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text('Order History', style: OrderaDesign.heading2),
+        centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        elevation: 0,
       ),
       body: Consumer<OrderProvider>(
         builder: (ctx, orderData, _) {
-          final orders = orderData.orders.reversed.toList(); // Newest first
+          final orders = orderData.orders.reversed.toList(); 
 
           if (orders.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_outlined, size: 80, color: Colors.grey[300]),
-                  SizedBox(height: 16),
-                  Text('No orders found', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
+                  Icon(Icons.history_outlined, size: 80, color: OrderaDesign.textSecondary.withOpacity(0.3)),
+                  const SizedBox(height: 16),
+                  Text('No orders found', style: OrderaDesign.bodyMedium),
                 ],
               ),
             );
           }
 
           return ListView.builder(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             itemCount: orders.length,
             itemBuilder: (ctx, i) {
               final order = orders[i];
-              return _buildOrderCard(order);
+              return _OrderHistoryCard(order: order);
             },
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildOrderCard(Order order) {
-    final dateFormat = DateFormat('MMM dd, yyyy HH:mm');
+class _OrderHistoryCard extends StatelessWidget {
+  final Order order;
+  const _OrderHistoryCard({required this.order});
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return OrderaDesign.warning;
+      case 'preparing': return OrderaDesign.primary;
+      case 'ready': return OrderaDesign.accent;
+      case 'completed': return OrderaDesign.textSecondary;
+      case 'cancelled': return OrderaDesign.danger;
+      default: return OrderaDesign.textPrimary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM dd, yyyy • HH:mm');
     final dateStr = order.createdAt != null ? dateFormat.format(order.createdAt!) : 'Just now';
+    final statusColor = _getStatusColor(order.status);
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: EdgeInsets.only(bottom: 16),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: OrderaDesign.cardDecoration,
       child: ExpansionTile(
-        tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _getStatusColor(order.status).withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.receipt_long, color: _getStatusColor(order.status)),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: statusColor.withOpacity(0.1), shape: BoxShape.circle),
+          child: Icon(Icons.receipt_long_outlined, color: statusColor, size: 20),
         ),
         title: Text(
-          'Order #${order.id}',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          'Order #${order.orderNumber ?? order.id}', 
+          style: OrderaDesign.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
-        subtitle: Text(dateStr, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        subtitle: Text(dateStr, style: OrderaDesign.label),
         trailing: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              '\$${order.totalAmount.toStringAsFixed(2)}',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple),
+            Text('\$${order.totalAmount.toStringAsFixed(2)}', style: OrderaDesign.bodyLarge.copyWith(color: OrderaDesign.primary, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+              child: Text(order.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
             ),
-            SizedBox(height: 4),
-            _buildStatusBadge(order.status),
           ],
         ),
         children: [
-          Divider(height: 1),
+          const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Order Items', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700])),
-                SizedBox(height: 8),
+                Text('Items', style: OrderaDesign.label),
+                const SizedBox(height: 12),
                 ...order.items.map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  padding: const EdgeInsets.only(bottom: 10.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${item.quantity}x ${item.product?.name ?? 'Unknown item'}'),
-                      Text('\$${((item.product?.price ?? 0) * item.quantity).toStringAsFixed(2)}'),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: OrderaDesign.background, borderRadius: BorderRadius.circular(4)),
+                        child: Text('${item.quantity}x', style: OrderaDesign.label.copyWith(fontSize: 10, color: OrderaDesign.primary)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          item.product?.name ?? 'Item',
+                          style: OrderaDesign.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '\$${((item.product?.price ?? 0) * item.quantity).toStringAsFixed(2)}',
+                        style: OrderaDesign.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 )).toList(),
-                SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Payment Status:', style: TextStyle(color: Colors.grey[600])),
-                    Text(order.paymentStatus.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange)),
+                    Text('Payment Method', style: OrderaDesign.label),
+                    Row(
+                      children: [
+                        Icon(
+                          order.paymentMethod == 'upi' ? Icons.qr_code_scanner : 
+                          order.paymentMethod == 'card' ? Icons.credit_card : Icons.payments,
+                          size: 16, color: OrderaDesign.textSecondary
+                        ),
+                        const SizedBox(width: 6),
+                        Text(order.paymentMethod.toUpperCase(), style: OrderaDesign.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Payment Status', style: OrderaDesign.label),
+                    Text(order.paymentStatus.toUpperCase(), style: OrderaDesign.bodyMedium.copyWith(
+                      color: order.paymentStatus == 'paid' ? OrderaDesign.accent : OrderaDesign.warning,
+                      fontWeight: FontWeight.bold,
+                    )),
                   ],
                 ),
               ],
@@ -124,31 +183,5 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: _getStatusColor(status).withOpacity(0.3)),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getStatusColor(status)),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending': return Colors.orange;
-      case 'preparing': return Colors.blue;
-      case 'ready': return Colors.green;
-      case 'completed': return Colors.grey;
-      case 'cancelled': return Colors.red;
-      default: return Colors.black;
-    }
   }
 }

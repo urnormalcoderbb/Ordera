@@ -1,6 +1,6 @@
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from . import database, models, auth, ws_manager
+import database, models, auth, ws_manager
 from sqlalchemy import func
 import json
 
@@ -481,9 +481,15 @@ async def create_order(request: Request):
             if total_amount is None or not items_data:
                 return JSONResponse({"error": "Order total and items are required"}, status_code=400)
 
+            # Calculate next order number for this restaurant
+            last_order = db.query(models.Order).filter(models.Order.restaurant_id == restaurant_id).order_by(models.Order.id.desc()).first()
+            next_order_number = (last_order.order_number + 1) if last_order and last_order.order_number else 1
+
             db_order = models.Order(
+                order_number=next_order_number,
                 total_amount=float(total_amount),
                 payment_status=body.get("payment_status", "unpaid"),
+                payment_method=body.get("payment_method", "cash"),
                 status="pending",
                 restaurant_id=restaurant_id
             )
@@ -525,15 +531,17 @@ async def create_order(request: Request):
 
             response_data = {
                 "id": db_order.id,
+                "order_number": db_order.order_number,
                 "status": db_order.status,
                 "total_amount": db_order.total_amount,
                 "payment_status": db_order.payment_status,
+                "payment_method": db_order.payment_method,
                 "items": enriched_items,
                 "created_at": db_order.created_at.isoformat() if db_order.created_at else None
             }
             
         # Broadcast to ONLY this restaurant's room
-        await ws_manager.manager.broadcast(json.dumps({"event": "new_order", "order_id": response_data["id"]}), restaurant_id)
+        await ws_manager.manager.broadcast_to_restaurant(json.dumps({"event": "new_order", "order_id": response_data["id"]}), restaurant_id)
         
         return JSONResponse(response_data)
     except Exception as e:
@@ -570,9 +578,11 @@ async def list_orders(request: Request):
                 })
             data.append({
                 "id": o.id,
+                "order_number": o.order_number,
                 "status": o.status,
                 "total_amount": o.total_amount,
                 "payment_status": o.payment_status,
+                "payment_method": o.payment_method,
                 "created_at": o.created_at.isoformat() if o.created_at else None,
                 "items": items
             })
@@ -595,5 +605,5 @@ async def update_order_status(request: Request):
         db_order.status = status
         db.commit()
         
-    await ws_manager.manager.broadcast(json.dumps({"event": "order_update", "order_id": order_id, "status": status}), restaurant_id)
+    await ws_manager.manager.broadcast_to_restaurant(json.dumps({"event": "order_update", "order_id": order_id, "status": status}), restaurant_id)
     return JSONResponse({"status": "success"})

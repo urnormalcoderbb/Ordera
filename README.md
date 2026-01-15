@@ -1,62 +1,59 @@
 # Ordera - Multi-Tenant Restaurant System
 
-A complete restaurant ordering system with multi-tenancy, category-based menu management, and real-time order processing.
+A professional, real-time restaurant ordering system with a shared cloud backend. 
 
 [**View Future Roadmap & Checklist**](./ROADMAP.md)
 
+## 🌎 Synchronization & Cloud Setup
+Ordera is now ready to run across multiple devices (Tablets, Phones, Kitchen Displays) using a shared database.
+
+### 🐳 Production Deployment (Docker)
+The easiest way to sync all devices is to run the backend in Docker:
+1. Ensure **Docker Desktop** is installed.
+2. Run: `docker-compose up --build`
+3. This launches:
+   - **Postgres Database**: Global source of truth.
+   - **Redis**: Real-time message broker for instant kitchen sync.
+   - **FastAPI/Starlette Backend**: The high-performance API.
+
+### � Connecting Devices
+1. In `frontend/lib/config/config.dart`, update `prodHost` to your server's IP or Domain.
+2. Apps running on any device will now see the same orders and menu items in real-time.
+
+---
+
 ## 🚀 Recent Upgrades
-- 🛒 **Cart Management**: Increase/decrease quantity or remove items directly from the cart.
-- 📊 **Enhanced Dashboard**: Modern sales reports with date-specific tracking.
-- 📜 **Order History**: Click on past orders to see exact items and prices.
-- 🏷️ **Naming Rules**: Enforced `Restaurant Name - Area` format for unique branch identification.
-- 🛡️ **Hardened Type-Safety**: Robust null-safety to prevent app crashes during data sync.
+- 🔄 **Global Sync**: Powered by Redis and PostgreSQL for multi-server reliability.
+- 🐳 **Dockerization**: One-click deployment for the entire infrastructure.
+- ⚡ **Real-time Engine**: Upgraded WebSocket system ensures 100% message delivery.
+- 🛡️ **Error Tracking**: Integrated Sentry for pro-active debugging in production.
+- 📊 **Enhanced Dashboard**: Real-time sales indicators and order tracking.
 
 ## Features
-- 🏪 **Multi-Tenant**: Support multiple restaurants with isolated data.
-- 🗂️ **Category Management**: Organize menu items by categories.
-- 📱 **Kiosk Mode**: Customer ordering interface with item thumbnails.
-- 🍳 **Kitchen Display (KDS)**: Real-time order updates with full item names.
-- 📊 **Manager Dashboard**: Menu management, order history, and daily sales overview.
+- 🏪 **Multi-Tenant**: Secure data isolation for multiple branches.
+- 🗂️ **Category Management**: Deep organization for menu items.
+- 📱 **Kiosk Mode**: High-end consumer interface with smooth cart logic.
+- 🍳 **Kitchen Display (KDS)**: Real-time ticket management for chefs.
+- 📊 **Admin Portal**: Insights, inventory, and order history.
 
-## Quick Start
-
-### Using Startup Scripts (Recommended)
-Double-click `start.bat` in the project root to launch both backend and frontend automatically.
-
-OR run from PowerShell:
-```powershell
-.\start.ps1
-```
+## Quick Start (Development)
+Double-click `start.bat` in the project root to launch a local dev environment.
 
 ## 🪜 Usage Walkthrough
-1. **Signup**: Create an account with your **Restaurant Name - Area** (e.g., *Pizza Parade - Downtown*) and City.
-2. **Login**: Use your admin credentials.
-3. **Manager Dashboard**: 
-   - Go to **Manage Menu**.
-   - First, create **Categories** (e.g., *Beverages*, *Main Course*).
-   - Then, add **Products** with prices and optional images.
-4. **Kiosk Mode**: 
-   - Customers view categories and add items to the cart.
-   - Use **+ / - buttons** in the cart to adjust quantities.
-   - Click **PAY NOW** to send the order to the kitchen.
-5. **Kitchen Display**: 
-   - View incoming orders in real-time.
-   - Tap **Mark Ready** when cooking is done.
-   - Tap **Complete** to archival the order.
-6. **Sales Tracking**: 
-   - Check the **Order History** in the Admin panel for itemized receipts.
-   - View **Today's Revenue** on the main dashboard.
+1. **Signup**: Create your restaurant branch (e.g., *Sizzling Bistro - Soho*).
+2. **Setup**: Create your categories and add products with high-quality images.
+3. **Operations**: 
+   - Customers place orders via the **Kiosk**.
+   - Kitchen staff receive instant notifications on the **KDS**.
+   - Managers track live revenue on the **Dashboard**.
 
 ## Tech Stack
-- Backend: Python (Starlette, SQLAlchemy, SQLite)
-- Frontend: Flutter (Web/Chrome)
-- Real-time: WebSockets
-- Auth: Custom JWT + SHA256
+- **Backend**: Python 3.10 (Starlette, SQLAlchemy, PostgreSQL)
+- **Infrastructure**: Redis (Pub/Sub), Docker, Docker-Compose
+- **Frontend**: Flutter (3.x)
+- **Monitoring**: Sentry
+- **CI/CD**: GitHub Actions
 
 ## Database Schema
-- `Restaurant` (name, city)
-- `Category` (name, restaurant_id)
-- `User` (username, password_hash, restaurant_id)
-- `Product` (name, price, image_url, category_id, restaurant_id)
-- `Order` (total_amount, status, payment_status, restaurant_id)
-- `OrderItem` (product_id, quantity, modifiers, order_id)
+- `Restaurant` -> `User` -> `Category` -> `Product` -> `Order` -> `OrderItem`
+- Optimized for horizontal scaling and multi-region deployment.

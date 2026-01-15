@@ -143,16 +143,20 @@ class OrderItem {
 
 class Order {
   final int? id;
+  final int? orderNumber;
   final double totalAmount;
   final String paymentStatus;
+  final String paymentMethod;
   final String status;
   final List<OrderItem> items;
   final DateTime? createdAt;
 
   Order({
     this.id,
+    this.orderNumber,
     required this.totalAmount,
     required this.paymentStatus,
+    required this.paymentMethod,
     required this.status,
     required this.items,
     this.createdAt,
@@ -162,6 +166,7 @@ class Order {
     return {
       'total_amount': totalAmount,
       'payment_status': paymentStatus,
+      'payment_method': paymentMethod,
       'items': items.map((item) => item.toJson()).toList(),
     };
   }
@@ -169,8 +174,10 @@ class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: (json['id'] as num?)?.toInt(),
+      orderNumber: (json['order_number'] as num?)?.toInt(),
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
       paymentStatus: json['payment_status'] ?? 'unpaid',
+      paymentMethod: json['payment_method'] ?? 'cash',
       status: json['status'] ?? 'pending',
       items: (json['items'] as List?)?.map((i) => OrderItem.fromJson(i)).toList() ?? [],
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,

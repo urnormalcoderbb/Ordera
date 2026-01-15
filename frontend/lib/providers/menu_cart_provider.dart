@@ -107,20 +107,25 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> placeOrder() async {
+  Order? _lastPlacedOrder;
+  Order? get lastPlacedOrder => _lastPlacedOrder;
+
+  Future<String?> placeOrder({required String paymentMethod}) async {
     if (_items.isEmpty) return "Cart is empty";
     if (_authToken == null) return "User not authenticated";
     
     Order order = Order(
       totalAmount: totalAmount,
       paymentStatus: 'paid', // Mock payment
+      paymentMethod: paymentMethod,
       status: 'pending',
       items: _items,
     );
 
     try {
-      await _apiService.placeOrder(order, _authToken!);
+      _lastPlacedOrder = await _apiService.placeOrder(order, _authToken!);
       clearCart();
+      notifyListeners();
       return null; // Success
     } catch (e) {
       print(e);

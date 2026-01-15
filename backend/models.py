@@ -1,12 +1,11 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .database import Base
+from database import Base
 
 class Restaurant(Base):
     __tablename__ = "restaurants"
 
-    id = Column(Integer, primary_key=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     city = Column(String, index=True, default="Unknown") # New City Column
@@ -63,9 +62,11 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
+    order_number = Column(Integer) # Restaurant-specific count
     status = Column(String, default="pending") # pending, paid, preparing, ready, completed
     total_amount = Column(Float)
     payment_status = Column(String, default="unpaid")
+    payment_method = Column(String, default="cash") # cash, upi, card
     created_at = Column(DateTime, default=datetime.utcnow)
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     

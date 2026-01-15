@@ -99,7 +99,7 @@ def get_current_user_token(request: Request) -> Optional[str]:
 # We don't really need a full User object loader in auth.py anymore, 
 # endpoints can do it with the decoded token data.
 # But for compatibility with existing import in endpoints:
-from . import database, models
+import database, models
 
 # Mock jwt class for endpoints usage if they call jwt.decode directly (which endpoints.py does)
 class MockJWT:

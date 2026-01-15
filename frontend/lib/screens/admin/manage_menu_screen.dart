@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/models.dart';
+import '../../config/design_system.dart';
 
 class ManageMenuScreen extends StatefulWidget {
   @override
@@ -22,7 +23,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() => setState(() {})); // Update FAB label when tab changes
+    _tabController.addListener(() => setState(() {})); 
     _loadData();
   }
 
@@ -42,7 +43,6 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
         });
       } catch (e) {
         setState(() => _loading = false);
-        print('Error loading data: $e');
       }
     }
   }
@@ -212,11 +212,22 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: OrderaDesign.background,
       appBar: AppBar(
-        title: Text('Menu Management'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: OrderaDesign.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text('Menu Management', style: OrderaDesign.heading2),
+        backgroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          tabs: [
+          labelColor: OrderaDesign.primary,
+          unselectedLabelColor: OrderaDesign.textSecondary,
+          indicatorColor: OrderaDesign.primary,
+          indicatorWeight: 3,
+          tabs: const [
             Tab(text: 'Categories'),
             Tab(text: 'Products'),
           ],
@@ -233,9 +244,9 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _tabController.index == 0 ? _addCategory : _addProduct,
-        icon: Icon(_tabController.index == 0 ? Icons.category : Icons.fastfood),
-        label: Text(_tabController.index == 0 ? 'Add Category' : 'Add Product'),
-        backgroundColor: _tabController.index == 0 ? Colors.orange : Colors.green,
+        icon: Icon(_tabController.index == 0 ? Icons.category : Icons.fastfood, color: Colors.white),
+        label: Text(_tabController.index == 0 ? 'Add Category' : 'Add Product', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: OrderaDesign.primary,
       ),
     );
   }
@@ -243,31 +254,40 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
   Widget _buildCategoriesTab() {
     if (_categories.isEmpty) {
       return Center(
-        child: Text('No categories yet. Tap + to add one.'),
+        child: Text('No categories yet. Tap + to add one.', style: OrderaDesign.bodyMedium),
       );
     }
 
     return ListView.builder(
+      padding: EdgeInsets.all(16),
       itemCount: _categories.length,
       itemBuilder: (ctx, i) {
         final category = _categories[i];
         final productCount = _products.where((p) => p.categoryId == category.id).length;
-        return ListTile(
-          leading: Icon(Icons.category),
-          title: Text(category.name),
-          subtitle: Text('$productCount products'),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.edit, color: Colors.blue),
-                onPressed: () => _editCategory(category),
-              ),
-              IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _deleteCategory(category.id),
-              ),
-            ],
+        return Container(
+          margin: EdgeInsets.only(bottom: 12),
+          decoration: OrderaDesign.cardDecoration,
+          child: ListTile(
+            leading: Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(color: OrderaDesign.primary.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(Icons.category, color: OrderaDesign.primary),
+            ),
+            title: Text(category.name, style: OrderaDesign.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text('$productCount products', style: OrderaDesign.bodyMedium),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit, color: OrderaDesign.primary),
+                  onPressed: () => _editCategory(category),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete, color: OrderaDesign.danger),
+                  onPressed: () => _deleteCategory(category.id),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -282,43 +302,51 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
 
     if (grouped.isEmpty) {
       return Center(
-        child: Text('No products yet. Tap + to add one.'),
+        child: Text('No products yet. Tap + to add one.', style: OrderaDesign.bodyMedium),
       );
     }
 
     return ListView(
+      padding: EdgeInsets.all(16),
       children: grouped.entries.map((entry) {
         final categoryName = _categories.firstWhere((c) => c.id == entry.key, orElse: () => Category(id: 0, name: 'Unknown', restaurantId: 0)).name;
-        return ExpansionTile(
-          title: Text(categoryName, style: TextStyle(fontWeight: FontWeight.bold)),
-          children: entry.value.map((product) {
-            return ListTile(
-              leading: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      '${_apiService.baseUrl}${product.imageUrl}',
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, _, __) => Icon(Icons.broken_image),
-                    )
-                  : Icon(Icons.fastfood),
-              title: Text(product.name),
-              subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit, color: Colors.blue),
-                    onPressed: () => _editProduct(product),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteProduct(product.id),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+        return Container(
+          margin: EdgeInsets.only(bottom: 16),
+          decoration: OrderaDesign.cardDecoration,
+          child: ExpansionTile(
+            title: Text(categoryName, style: OrderaDesign.bodyLarge.copyWith(fontWeight: FontWeight.bold)),
+            children: entry.value.map((product) {
+              return ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          '${_apiService.baseUrl}${product.imageUrl}',
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, _, __) => Container(color: OrderaDesign.background, child: Icon(Icons.broken_image)),
+                        )
+                      : Container(color: OrderaDesign.background, child: Icon(Icons.fastfood, color: Colors.grey)),
+                ),
+                title: Text(product.name, style: OrderaDesign.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
+                subtitle: Text('\$${product.price.toStringAsFixed(2)}', style: OrderaDesign.label),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.edit, color: OrderaDesign.primary, size: 20),
+                      onPressed: () => _editProduct(product),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: OrderaDesign.danger, size: 20),
+                      onPressed: () => _deleteProduct(product.id),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         );
       }).toList(),
     );
@@ -328,7 +356,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> with SingleTickerPr
 class _ProductDialog extends StatefulWidget {
   final List<Category> categories;
   final String token;
-  final Product? product; // Add this for editing
+  final Product? product; 
 
   _ProductDialog({required this.categories, required this.token, this.product});
 
@@ -355,7 +383,6 @@ class __ProductDialogState extends State<_ProductDialog> {
       _descController.text = widget.product!.description ?? '';
       _selectedCategoryId = widget.product!.categoryId;
       _imageUrl = widget.product!.imageUrl;
-      // We don't have bytes for existing image, but that's okay, _imageUrl will show it
     } else if (widget.categories.isNotEmpty) {
       _selectedCategoryId = widget.categories.first.id;
     }
@@ -375,7 +402,6 @@ class __ProductDialogState extends State<_ProductDialog> {
           _uploading = true;
         });
         
-        // Upload the image
         final apiService = ApiService();
         final uploadedUrl = await apiService.uploadImage(
           _imageBytes!,
@@ -392,17 +418,10 @@ class __ProductDialogState extends State<_ProductDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Image uploaded'), backgroundColor: Colors.green),
           );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Upload failed'), backgroundColor: Colors.red),
-          );
         }
       }
     } catch (e) {
       setState(() => _uploading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
     }
   }
 
@@ -410,46 +429,30 @@ class __ProductDialogState extends State<_ProductDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(widget.product == null ? 'Add Product' : 'Edit Product', style: OrderaDesign.heading2),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildLabel('Product Name *'),
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Product Name *',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
+              decoration: OrderaDesign.inputDecoration('Enter product name'),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+            _buildLabel('Price *'),
             TextField(
               controller: _priceController,
-              decoration: InputDecoration(
-                labelText: 'Price *',
-                border: OutlineInputBorder(),
-                prefixText: '\$',
-              ),
+              decoration: OrderaDesign.inputDecoration('0.00').copyWith(prefixText: '\$ '),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _descController,
-              decoration: InputDecoration(
-                labelText: 'Description (optional)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+            _buildLabel('Category *'),
             DropdownButtonFormField<int>(
               value: _selectedCategoryId,
-              decoration: InputDecoration(
-                labelText: 'Category *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
-              ),
+              decoration: OrderaDesign.inputDecoration('Select category'),
               items: widget.categories.map((cat) {
                 return DropdownMenuItem(
                   value: cat.id,
@@ -458,92 +461,57 @@ class __ProductDialogState extends State<_ProductDialog> {
               }).toList(),
               onChanged: (val) => setState(() => _selectedCategoryId = val),
             ),
-            SizedBox(height: 15),
-            // Image Picker
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  if (_imageBytes != null)
-                    Column(
-                      children: [
-                        Image.memory(
-                          Uint8List.fromList(_imageBytes!),
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
-                        SizedBox(height: 8),
-                        Text(_imageName ?? 'Image selected', style: TextStyle(fontSize: 12)),
-                      ],
-                    )
-                  else if (_imageUrl != null && _imageUrl!.isNotEmpty)
-                    Column(
-                      children: [
-                        Image.network(
-                          '${ApiService().baseUrl}$_imageUrl',
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, _, __) => Icon(Icons.broken_image, size: 50),
-                        ),
-                        SizedBox(height: 8),
-                        Text('Current Image', style: TextStyle(fontSize: 12)),
-                      ],
-                    )
-                  else
-                    Icon(Icons.image, size: 50, color: Colors.grey),
-                  SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    onPressed: _uploading ? null : _pickImage,
-                    icon: Icon(_uploading ? Icons.hourglass_empty : Icons.upload),
-                    label: Text(_uploading ? 'Uploading...' : 'Choose Image'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            SizedBox(height: 16),
+            _buildLabel('Description'),
+            TextField(
+              controller: _descController,
+              decoration: OrderaDesign.inputDecoration('Enter description'),
+              maxLines: 2,
+            ),
+            SizedBox(height: 24),
+            Center(
+              child: GestureDetector(
+                onTap: _uploading ? null : _pickImage,
+                child: Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: OrderaDesign.background,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: OrderaDesign.textSecondary.withOpacity(0.2)),
                   ),
-                ],
+                  child: _uploading 
+                      ? Center(child: CircularProgressIndicator())
+                      : (_imageUrl != null && _imageUrl!.isNotEmpty)
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.network('${ApiService().baseUrl}$_imageUrl', fit: BoxFit.cover),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_a_photo_outlined, color: OrderaDesign.primary, size: 32),
+                                SizedBox(height: 8),
+                                Text('Upload Product Image', style: OrderaDesign.label),
+                              ],
+                            ),
+                ),
               ),
             ),
-            SizedBox(height: 10),
-            Text('* Required fields', style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel'),
+          child: Text('Cancel', style: TextStyle(color: OrderaDesign.textSecondary)),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          style: ElevatedButton.styleFrom(backgroundColor: OrderaDesign.primary),
           onPressed: () {
-            if (_nameController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please enter product name')),
-              );
-              return;
-            }
-            if (_priceController.text.trim().isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please enter price')),
-              );
-              return;
-            }
-            if (_selectedCategoryId == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please select a category')),
-              );
-              return;
-            }
-            
+            if (_nameController.text.trim().isEmpty || _priceController.text.trim().isEmpty || _selectedCategoryId == null) return;
             final price = double.tryParse(_priceController.text);
-            if (price == null || price <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please enter a valid price')),
-              );
-              return;
-            }
+            if (price == null) return;
             
             Navigator.pop(context, {
               'name': _nameController.text.trim(),
@@ -553,9 +521,16 @@ class __ProductDialogState extends State<_ProductDialog> {
               'image_url': _imageUrl,
             });
           },
-          child: Text(widget.product == null ? 'Add Product' : 'Update Product'),
+          child: Text(widget.product == null ? 'Create' : 'Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ],
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      child: Text(text, style: OrderaDesign.label),
     );
   }
 }

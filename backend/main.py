@@ -1,12 +1,27 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from starlette.applications import Starlette
 from starlette.routing import Route, WebSocketRoute, Mount
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
-from . import models, auth, endpoints, ws_manager
-from .database import engine, SessionLocal
-import os
+import models, auth, endpoints, ws_manager
+from database import engine, SessionLocal
+import sentry_sdk
+from sentry_sdk.integrations.starlette import StarletteIntegration
+
+# Initialize Sentry if DSN is provided
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[StarletteIntegration()],
+        traces_sample_rate=1.0,
+    )
 
 # Create Tables
 models.Base.metadata.create_all(bind=engine)
@@ -15,16 +30,16 @@ models.Base.metadata.create_all(bind=engine)
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
-# Seed Admin - Removed to enforce Multi-Tenant Signup
-# with endpoints.database.get_db_context() as db:
-#     pass
+async def startup():
+    await ws_manager.broadcast.connect()
+
+async def shutdown():
+    await ws_manager.broadcast.disconnect()
 
 async def homepage(request):
     return JSONResponse({"message": "Welcome to Ordera API (Starlette Edition)"})
 
 async def websocket_endpoint(websocket):
-    # expect /ws/kitchen?restaurant_id=X or ideally authenticated.
-    # For prototype, we will pass it in query param
     restaurant_id = websocket.query_params.get("restaurant_id")
     if not restaurant_id:
         await websocket.close()
@@ -60,8 +75,6 @@ routes = [
     WebSocketRoute("/ws/kitchen", websocket_endpoint),
 ]
 
-
-# Validates that requests are actually reaching the server
 from starlette.middleware.base import BaseHTTPMiddleware
 import logging
 
@@ -80,4 +93,10 @@ middleware = [
     Middleware(LoggingMiddleware)
 ]
 
-app = Starlette(debug=True, routes=routes, middleware=middleware)
+app = Starlette(
+    debug=True, 
+    routes=routes, 
+    middleware=middleware,
+    on_startup=[startup],
+    on_shutdown=[shutdown]
+)

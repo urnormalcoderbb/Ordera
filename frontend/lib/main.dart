@@ -8,10 +8,13 @@ import 'screens/role_selection_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/kiosk/kiosk_screen.dart';
+import 'screens/kiosk/cart_screen.dart';
 import 'screens/kitchen/kitchen_screen.dart';
 import 'screens/admin/dashboard_screen.dart';
 import 'screens/admin/manage_menu_screen.dart';
 import 'screens/admin/order_history_screen.dart';
+
+import 'config/design_system.dart';
 
 void main() {
   runApp(MyApp());
@@ -33,15 +36,36 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<AuthProvider, OrderProvider>(
           create: (_) => OrderProvider(),
-          update: (_, auth, order) => order!..update(auth.token),
+          update: (_, auth, order) => order!..update(auth.token, auth.user?.restaurantId),
         ),
       ],
       child: MaterialApp(
         title: 'Ordera',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          textTheme: GoogleFonts.poppinsTextTheme(),
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: OrderaDesign.primary,
+            primary: OrderaDesign.primary,
+            secondary: OrderaDesign.secondary,
+            background: OrderaDesign.background,
+          ),
+          textTheme: GoogleFonts.interTextTheme(),
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+            },
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
         ),
         // Start at Login
         home: LoginScreen(), 
@@ -50,6 +74,7 @@ class MyApp extends StatelessWidget {
           '/signup': (ctx) => SignupScreen(),
           '/role_selection': (ctx) => RoleSelectionScreen(),
           '/kiosk': (ctx) => KioskScreen(),
+          '/cart': (ctx) => CartScreen(),
           '/kitchen': (ctx) => KitchenScreen(),
           '/admin': (ctx) => AdminDashboardScreen(),
           '/manage_menu': (ctx) => ManageMenuScreen(),

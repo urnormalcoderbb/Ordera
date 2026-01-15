@@ -5,3 +5,8 @@ websockets
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
+psycopg2-binary
+python-dotenv
+broadcaster
+sentry-sdk
+aioredis

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../config/design_system.dart';
 import '../providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -11,7 +11,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _restaurantNameController = TextEditingController();
-  final _cityController = TextEditingController(); // Added
+  final _cityController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -23,151 +23,219 @@ class _SignupScreenState extends State<SignupScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     
     bool success = await auth.signup(
-      _restaurantNameController.text,
-      _cityController.text,
-      _usernameController.text,
-      _passwordController.text,
+      _restaurantNameController.text.trim(),
+      _cityController.text.trim(),
+      _usernameController.text.trim(),
+      _passwordController.text.trim(),
     );
 
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
 
     if (success) {
-       // Navigate to login or auto-login
        Navigator.of(context).pushReplacementNamed('/login');
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Signup successful! Please login.')));
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registration successful! Please login.')));
     } else {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Signup failed. Username might be taken.')));
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+         content: Text('Signup failed. Username might be taken.'),
+         backgroundColor: OrderaDesign.danger,
+       ));
     }
-  }
-
-  Widget _buildTip(String emoji, String text) {
-    return Padding(
-      padding: EdgeInsets.only(top: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: TextStyle(fontSize: 12)),
-          SizedBox(width: 6),
-          Expanded(child: Text(text, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Container(
-          width: 400,
-          padding: EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Create Account", style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                SizedBox(height: 10),
-                Text("Start your digital restaurant journey", style: TextStyle(color: Colors.grey)),
-                SizedBox(height: 20),
-                // Instructions Panel
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
+      backgroundColor: OrderaDesign.background,
+      body: Stack(
+        children: [
+          // Background Aesthetic
+          Positioned(
+            top: -50,
+            left: -50,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: OrderaDesign.secondary.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -80,
+            right: -80,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: OrderaDesign.primary.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Container(
+                width: 500,
+                padding: const EdgeInsets.all(40),
+                decoration: OrderaDesign.cardDecoration,
+                child: Form(
+                  key: _formKey,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: OrderaDesign.secondary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.rocket_launch_outlined, color: OrderaDesign.secondary, size: 32),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Center(child: Text("Create Your Workspace", style: OrderaDesign.heading2)),
+                      const SizedBox(height: 8),
+                      Center(child: Text("Set up your restaurant onto Ordera", style: OrderaDesign.bodyMedium)),
+                      const SizedBox(height: 32),
+                      
+                      // Tips Panel
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: OrderaDesign.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: OrderaDesign.primary.withOpacity(0.1)),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildTipRow(Icons.info_outline, "Format: 'Restaurant Name - Area'"),
+                            const SizedBox(height: 8),
+                            _buildTipRow(Icons.location_on_outlined, "City name only for location field"),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      _buildLabel("Restaurant Name"),
+                      TextFormField(
+                        controller: _restaurantNameController,
+                        decoration: OrderaDesign.inputDecoration("e.g. Pizza Palace - Downtown"),
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return 'Required';
+                          if (!val.contains(' - ')) return 'Use: Name - Area';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildLabel("City / Location"),
+                      TextFormField(
+                        controller: _cityController,
+                        decoration: OrderaDesign.inputDecoration("e.g. New York"),
+                        validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 20),
+
                       Row(
                         children: [
-                          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 18),
-                          SizedBox(width: 8),
-                          Text("Quick Tips", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700)),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLabel("Admin User"),
+                                TextFormField(
+                                  controller: _usernameController,
+                                  decoration: OrderaDesign.inputDecoration("Username"),
+                                  validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLabel("Password"),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  decoration: OrderaDesign.inputDecoration("Min 6 chars"),
+                                  obscureText: true,
+                                  validator: (val) => val == null || val.length < 6 ? 'Too short' : null,
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      SizedBox(height: 8),
-                      _buildTip("🏪", "Restaurant Name: Include your restaurant name + area (e.g., 'Pizza Palace - Downtown')"),
-                      _buildTip("📍", "Location: Enter only your city name (e.g., 'New York')"),
-                      _buildTip("👤", "Username: This will be your admin login (e.g., 'admin' or your name)"),
-                      _buildTip("🔒", "Password: Minimum 6 characters, keep it secure!"),
+                      const SizedBox(height: 40),
+
+                      _isLoading 
+                        ? const Center(child: CircularProgressIndicator())
+                        : SizedBox(
+                            width: double.infinity,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: OrderaDesign.primaryGradient,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                ),
+                                onPressed: _submit,
+                                child: const Text("Get Started", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
+                          child: RichText(
+                            text: TextSpan(
+                              text: "Join an existing workspace? ",
+                              style: OrderaDesign.bodyMedium,
+                              children: const [
+                                TextSpan(
+                                  text: "Login",
+                                  style: TextStyle(color: OrderaDesign.primary, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
-                TextFormField(
-                  controller: _restaurantNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Restaurant Name', 
-                    hintText: 'e.g., Pizza Palace - Downtown',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: Icon(Icons.store),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Required';
-                    if (!val.contains(' - ')) return 'Format must be: Name - Area';
-                    return null;
-                  },
-                ),
-                SizedBox(height: 15),
-                TextFormField(
-                  controller: _cityController,
-                  decoration: InputDecoration(
-                    labelText: 'City / Location', 
-                    hintText: 'e.g., New York',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: Icon(Icons.location_city),
-                  ),
-                  validator: (val) => val!.isEmpty ? 'Required' : null,
-                ),
-                SizedBox(height: 15),
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Admin Username', 
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: Icon(Icons.person_add),
-                  ),
-                  validator: (val) => val!.isEmpty ? 'Required' : null,
-                ),
-                SizedBox(height: 15),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password', 
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: Icon(Icons.lock_outline),
-                  ),
-                  obscureText: true,
-                  validator: (val) => val!.length < 6 ? 'Min 6 chars' : null,
-                ),
-                SizedBox(height: 25),
-                _isLoading 
-                  ? CircularProgressIndicator()
-                  : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: _submit,
-                        child: Text("Create Restaurant", style: TextStyle(fontSize: 16, color: Colors.white)),
-                      ),
-                    ),
-                SizedBox(height: 15),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
-                  child: Text("Already have an account? Login", style: TextStyle(color: Colors.deepPurple)),
-                )
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      child: Text(text, style: OrderaDesign.label),
+    );
+  }
+
+  Widget _buildTipRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: OrderaDesign.primary.withOpacity(0.7)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text, style: OrderaDesign.label.copyWith(fontSize: 12))),
+      ],
     );
   }
 }

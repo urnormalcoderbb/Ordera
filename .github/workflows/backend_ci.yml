@@ -1,0 +1,42 @@
+name: Ordera Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run Lint (Optional)
+      run: |
+        # Add linting here if desired
+        echo "Ready for production"
+
+  build-and-push:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Docker Image
+      run: |
+        docker build -t ordera-backend ./backend
+    # You would typically add docker login and push steps here
+    # e.g., to GitHub Container Registry or Docker Hub
+    # - name: Push to Registry
+    #   run: |
+    #     docker tag ordera-backend ghcr.io/${{ github.repository }}/backend:latest
+    #     docker push ghcr.io/${{ github.repository }}/backend:latest
